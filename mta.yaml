@@ -1,0 +1,63 @@
+---
+_schema-version: '3.1'
+ID: postgrestemp
+version: 1.0.0
+description: "A simple CAP project."
+parameters:
+  enable-parallel-deployments: true
+build-parameters:
+  before-all:
+    - builder: custom
+      commands:
+        - npm install --production
+        #- npx -p @sap/cds-dk cds build --production
+        - npx cds-dbm build --production
+modules:
+  - name: postgrestemp-srv
+    type: nodejs
+    path: gen/srv
+    parameters:
+      buildpack: nodejs_buildpack
+    build-parameters:
+      builder: npm-ci
+    provides:
+      - name: srv-api # required by consumers of CAP services (e.g. approuter)
+        properties:
+          srv-url: ${default-url}
+    requires:
+      - name: postgresql-db
+
+  - name: devtobepostgrestempfest-db-deployer
+    type: custom
+    path: gen/db
+    parameters:
+      buildpacks: [https://github.com/cloudfoundry/apt-buildpack#v0.2.2, nodejs_buildpack] 
+      no-route: true
+      no-start: true
+      disk-quota: 2GB
+      memory: 512MB
+      tasks:
+      - name: deploy_to_postgresql
+        command: ./deploy.sh
+        disk-quota: 2GB
+        memory: 512MB      
+    build-parameters:
+      ignore: ["node_modules/"]
+    requires:
+      - name: postgresql-db
+
+resources:
+  - name: postgrestemp-uaa
+    parameters:
+      path: ./xs-security.json
+      service: xsuaa    
+      service-plan: application
+    type: com.sap.xs.uaa
+  - name: postgresql-db
+    parameters:
+      path: ./pg-options.json
+      service: postgresql-db
+      service-plan: free
+      skip-service-updates:
+        parameters: true
+    type: org.cloudfoundry.managed-service

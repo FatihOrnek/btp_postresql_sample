@@ -1,0 +1,26 @@
+{
+    "xsappname": "postgrestemp",
+    "tenant-mode": "dedicated",
+    "scopes": [
+        {
+            "name": "uaa.user",
+            "description": "UAA"
+        },
+        {
+            "name": "$XSAPPNAME.playHangman",
+            "description": "Allows to play hangman games"
+        }
+    ],
+    "role-templates": [
+        {
+            "name": "Token_Exchange",
+            "description": "UAA",
+            "scope-references": ["uaa.user"]
+        },
+        {
+            "name": "user",
+            "description": "User",
+            "scope-references": ["$XSAPPNAME.playHangman"]
+        }
+    ]
+}
